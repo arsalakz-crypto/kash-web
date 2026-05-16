@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kash</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050706;
+      --surface: #1F2623;
+      --stroke: rgba(255,255,255,0.08);
+      --mint: #40E3B1;
+      --mint-dark: #2db88d;
+      --text-primary: #F0F3F1;
+      --text-secondary: #B1B9B5;
+      --text-low: #737C78;
+      --danger-fill: rgba(247,92,97,0.14);
+      --danger: #F75C61;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #E8EFEC;
+        --surface: #FAFDFB;
+        --stroke: rgba(0,0,0,0.08);
+        --mint: #007856;
+        --mint-dark: #005f44;
+        --text-primary: #18211E;
+        --text-secondary: #5C6762;
+        --text-low: #5C6562;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      min-height: 100dvh;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--stroke);
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: var(--mint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon svg {
+      width: 36px;
+      height: 36px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .error-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--danger-fill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: none;
+      stroke: var(--danger);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: var(--mint);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: var(--mint-dark); }
+
+    .note {
+      font-size: 13px;
+      color: var(--text-low);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+    </div>
+    <div class="text-group"><h1>Loading…</h1></div>
+  </div>
+
+  <script>
+    const card = document.getElementById('card');
+
+    function parseHash(hash) {
+      const str = hash.startsWith('#') ? hash.slice(1) : hash;
+      const params = {};
+      str.split('&').forEach(part => {
+        const [key, ...rest] = part.split('=');
+        if (key) params[decodeURIComponent(key)] = decodeURIComponent(rest.join('=') || '');
+      });
+      return params;
+    }
+
+    function showRecovery(deepLink) {
+      card.innerHTML = `
+        <div class="icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="text-group">
+          <h1>Reset your password</h1>
+          <p>Tap the button below to open Kash and set a new password.</p>
+        </div>
+        <a class="btn" href="${deepLink}">Open Kash</a>
+        <p class="note">If the button doesn't work, make sure Kash is installed on this device.</p>
+      `;
+    }
+
+    function showError(message) {
+      card.innerHTML = `
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="text-group">
+          <h1>Link expired</h1>
+          <p>${message}</p>
+        </div>
+        <p class="note">Open Kash and request a new password reset link.</p>
+      `;
+    }
+
+    function showGeneric() {
+      card.innerHTML = `
+        <div class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="text-group">
+          <h1>Kash</h1>
+          <p>Money clarity, minus the self deception.</p>
+        </div>
+        <p class="note">This page handles authentication for the Kash iOS app.</p>
+      `;
+    }
+
+    const hash = window.location.hash;
+    if (hash) {
+      const params = parseHash(hash);
+      const error = params['error_description'] || params['error'];
+      const accessToken = params['access_token'];
+      const type = params['type'];
+
+      if (error) {
+        showError(error.replace(/\+/g, ' '));
+      } else if (accessToken && (type === 'recovery' || type === undefined)) {
+        showRecovery('kash://' + hash);
+      } else {
+        showGeneric();
+      }
+    } else {
+      showGeneric();
+    }
+  </script>
+</body>
+</html>
