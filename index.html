@@ -155,10 +155,11 @@
   <script>
     const card = document.getElementById('card');
 
-    function parseHash(hash) {
-      const str = hash.startsWith('#') ? hash.slice(1) : hash;
+    // Parse a query/hash string into a key-value object
+    function parseParams(str) {
+      const s = str.startsWith('?') || str.startsWith('#') ? str.slice(1) : str;
       const params = {};
-      str.split('&').forEach(part => {
+      s.split('&').forEach(part => {
         const [key, ...rest] = part.split('=');
         if (key) params[decodeURIComponent(key)] = decodeURIComponent(rest.join('=') || '');
       });
@@ -215,20 +216,26 @@
       `;
     }
 
-    const hash = window.location.hash;
-    if (hash) {
-      const params = parseHash(hash);
-      const error = params['error_description'] || params['error'];
-      const accessToken = params['access_token'];
-      const type = params['type'];
+    // Supabase can send tokens in the hash (implicit flow)
+    // or a code in the query string (PKCE flow)
+    const hashParams  = parseParams(window.location.hash);
+    const queryParams = parseParams(window.location.search);
 
-      if (error) {
-        showError(error.replace(/\+/g, ' '));
-      } else if (accessToken && (type === 'recovery' || type === undefined)) {
-        showRecovery('kash://' + hash);
-      } else {
-        showGeneric();
-      }
+    const error = hashParams['error_description'] || hashParams['error']
+               || queryParams['error_description'] || queryParams['error'];
+
+    const accessToken = hashParams['access_token'];
+    const code        = queryParams['code'];
+    const type        = hashParams['type'] || queryParams['type'];
+
+    if (error) {
+      showError(error.replace(/\+/g, ' '));
+    } else if (accessToken) {
+      // Implicit flow — pass full hash to app
+      showRecovery('kash://' + window.location.hash);
+    } else if (code) {
+      // PKCE flow — pass code as query param to app
+      showRecovery('kash://?code=' + encodeURIComponent(code) + '&type=recovery');
     } else {
       showGeneric();
     }
