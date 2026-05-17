@@ -12,12 +12,9 @@
       --surface: #1F2623;
       --stroke: rgba(255,255,255,0.08);
       --mint: #40E3B1;
-      --mint-dark: #2db88d;
       --text-primary: #F0F3F1;
       --text-secondary: #B1B9B5;
       --text-low: #737C78;
-      --danger-fill: rgba(247,92,97,0.14);
-      --danger: #F75C61;
     }
 
     @media (prefers-color-scheme: light) {
@@ -26,7 +23,6 @@
         --surface: #FAFDFB;
         --stroke: rgba(0,0,0,0.08);
         --mint: #007856;
-        --mint-dark: #005f44;
         --text-primary: #18211E;
         --text-secondary: #5C6762;
         --text-low: #5C6562;
@@ -76,32 +72,6 @@
       display: block;
     }
 
-    .error-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: var(--danger-fill);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .error-icon svg {
-      width: 32px;
-      height: 32px;
-      fill: none;
-      stroke: var(--danger);
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .text-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
     h1 {
       font-size: 22px;
       font-weight: 700;
@@ -115,21 +85,6 @@
       line-height: 1.5;
     }
 
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      background: var(--mint);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 14px;
-      text-decoration: none;
-      transition: background 0.15s;
-    }
-
-    .btn:hover { background: var(--mint-dark); }
-
     .note {
       font-size: 13px;
       color: var(--text-low);
@@ -138,94 +93,15 @@
   </style>
 </head>
 <body>
-  <div class="card" id="card">
+  <div class="card">
     <div class="icon">
       <img src="icon.png" alt="Kash" />
     </div>
-    <div class="text-group"><h1>Loading…</h1></div>
+    <div class="text-group">
+      <h1>Kash</h1>
+      <p>Money clarity, minus the self deception.</p>
+    </div>
+    <p class="note">Coming soon to the App Store.</p>
   </div>
-
-  <script>
-    const card = document.getElementById('card');
-
-    // Parse a query/hash string into a key-value object
-    function parseParams(str) {
-      const s = str.startsWith('?') || str.startsWith('#') ? str.slice(1) : str;
-      const params = {};
-      s.split('&').forEach(part => {
-        const [key, ...rest] = part.split('=');
-        if (key) params[decodeURIComponent(key)] = decodeURIComponent(rest.join('=') || '');
-      });
-      return params;
-    }
-
-    function showRecovery(deepLink) {
-      card.innerHTML = `
-        <div class="icon">
-          <img src="icon.png" alt="Kash" />
-        </div>
-        <div class="text-group">
-          <h1>Reset your password</h1>
-          <p>Tap the button below to open Kash and set a new password.</p>
-        </div>
-        <a class="btn" href="${deepLink}">Open Kash</a>
-        <p class="note">If the button doesn't work, make sure Kash is installed on this device.</p>
-      `;
-    }
-
-    function showError(message) {
-      card.innerHTML = `
-        <div class="error-icon">
-          <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <div class="text-group">
-          <h1>Link expired</h1>
-          <p>${message}</p>
-        </div>
-        <p class="note">Open Kash and request a new password reset link.</p>
-      `;
-    }
-
-    function showGeneric() {
-      card.innerHTML = `
-        <div class="icon">
-          <img src="icon.png" alt="Kash" />
-        </div>
-        <div class="text-group">
-          <h1>Kash</h1>
-          <p>Money clarity, minus the self deception.</p>
-        </div>
-        <p class="note">This page handles authentication for the Kash iOS app.</p>
-      `;
-    }
-
-    // Supabase can send tokens in the hash (implicit flow)
-    // or a code in the query string (PKCE flow)
-    const hashParams  = parseParams(window.location.hash);
-    const queryParams = parseParams(window.location.search);
-
-    const error = hashParams['error_description'] || hashParams['error']
-               || queryParams['error_description'] || queryParams['error'];
-
-    const accessToken = hashParams['access_token'];
-    const code        = queryParams['code'];
-    const type        = hashParams['type'] || queryParams['type'];
-
-    if (error) {
-      showError(error.replace(/\+/g, ' '));
-    } else if (accessToken) {
-      // Implicit flow — pass full hash to app
-      showRecovery('kash://' + window.location.hash);
-    } else if (code) {
-      // PKCE flow — pass code as query param to app
-      showRecovery('kash://?code=' + encodeURIComponent(code) + '&type=recovery');
-    } else {
-      showGeneric();
-    }
-  </script>
 </body>
 </html>
